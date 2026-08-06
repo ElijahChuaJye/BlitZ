@@ -343,13 +343,17 @@ void Application::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
 
-	// THE MASTER DRAW TRIGGER CALL.
-	// Parameters: m_vertices.size() (3 vertices), 1 instance, starting at vertex 0, starting at instance 0.
-	// WHY: Instead of hardcoding 3, we use our vector size. This tells the GPU to read 3 vertices
-	// from our bound vertex buffer to assemble the triangle geometry.
-	vkCmdDraw(commandBuffer, static_cast<uint32_t>(m_vertices.size()), 1, 0, 0);
+	//This command tells the GPU how veritces are conencted to form triangles without duplicating vertex data.
+	//Params:buffer, offset(0), indexType (VK_INDEX_TPYE_UINT16 matches uint16_t vector).
+	vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
-	//Close the rendering
+	//Indexed draw call
+	//Instad of drawing raw vertices sequentially, GPU looks up indicies from m_indexBuffer,
+	//which points to vertices in m_vertexBuffer to asssemble the 2 triangles (4-corner Quad).
+	//Parms: m_indcies.size(), 1 instance, 0 index offset, 0 vertex offset and 0 instance offset
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(m_indices.size()), 1, 0, 0, 0);
+
+	//Close the DYNAMIC rendering passs for this frame
 	vkCmdEndRendering(commandBuffer);
 
 	// =========================================================================

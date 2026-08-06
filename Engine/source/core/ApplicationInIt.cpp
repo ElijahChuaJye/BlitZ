@@ -135,6 +135,7 @@ void Application::initVulkan() {
 	createGraphicsPipeline();
 	createCommandPool();
 	createVertexBuffer();
+	createIndexBuffer();
 	createCommandBuffers();
 	createSyncObjects(); // Implement this function block to bake the fences!
 }
@@ -369,13 +370,19 @@ void Application::cleanup() {
 	}
 	m_renderFinishedSemaphores.clear();
 
-	//Cleaing of VMA buffers
+	//3. Cleaning of VMA buffers
 
 	if (m_vertexBuffer != VK_NULL_HANDLE) {
 		vmaDestroyBuffer(m_allocator, m_vertexBuffer, m_vertexAllocation);
 		m_vertexBuffer = VK_NULL_HANDLE;
 	}
 
+	if (m_indexBuffer != VK_NULL_HANDLE) {
+		vmaDestroyBuffer(m_allocator, m_indexBuffer, m_indexAllocation);
+		m_indexBuffer = VK_NULL_HANDLE;
+	}
+
+	//Must be destroyed the allocator AFTER all buffers are freed
 	if (m_allocator != VK_NULL_HANDLE) {
 		vmaDestroyAllocator(m_allocator);
 		m_allocator = VK_NULL_HANDLE;

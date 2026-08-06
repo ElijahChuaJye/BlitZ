@@ -233,10 +233,18 @@ private:
 	//our GPU buffers (vertex buffers, Index Buffers, Uniform buffers)
 	VmaAllocator m_allocator;
 
+	//4-corner Quad Vertices
 	const std::vector<Vertex> m_vertices = {
-		{{0.5f, -0.5f}, {1.f, 0.f, 0.f}},	//BOTTOM LEFT, RED
-		{{0.5f, 0.5f}, {0.f, 1.f, 0.f}},	//TOP, BLUE	
-		{{-0.5, -0.5f}, {0.f, 0.f, 1.f} }	//BOTTOM RIGHT, GREEN
+		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0: Top-Left (Red)
+		{{ 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}}, // 1: Top-Right (Green)
+		{{ 0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}}, // 2: Bottom-Right (Blue)
+		{{-0.5f,  0.5f}, {1.0f, 1.0f, 0.0f}}  // 3: Bottom-Left (Yellow)
+	};
+
+	// 2. Index vector to form 2 triangles out of the 4 vertices above
+	const std::vector<uint16_t> m_indices = {
+		0, 1, 2,  // First Triangle  (Top-Left -> Top-Right -> Bottom-Right)
+		2, 3, 0   // Second Triangle (Bottom-Right -> Bottom-Left -> Top-Left)
 	};
 
 	//In Vulkan, every resource need 2 handles
@@ -245,10 +253,16 @@ private:
 	//VmaAllocation, VMA tracking handle representing the physical VRAM allocation
 	VmaAllocation m_vertexAllocation{ VK_NULL_HANDLE };
 
+	//Handle for index buffer
+	VkBuffer m_indexBuffer{ VK_NULL_HANDLE };
+	VmaAllocation m_indexAllocation{ VK_NULL_HANDLE };
+
 	//Helper functions VMA
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memUsage, VkBuffer& buffer, VmaAllocation& allocation);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void createVertexBuffer();
+
+	void createIndexBuffer();
 
 
 };

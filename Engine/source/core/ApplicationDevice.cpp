@@ -385,3 +385,38 @@ void Application::createVertexBuffer() {
 	std::cout << "Engine Buffer : Vertex buffer successfully loaded into private VRAM using VMA. " << std::endl;
 
 }
+
+void Application::createIndexBuffer(){
+	VkDeviceSize bufferSize = sizeof(m_indices[0]) * m_indices.size();
+
+	//Temp staging buffer
+	VkBuffer stagingBuffer;
+	VmaAllocation stagingAllocation;
+	createBuffer(bufferSize,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VMA_MEMORY_USAGE_CPU_TO_GPU,
+		stagingBuffer,
+		stagingAllocation
+	);
+
+	//Copy index vector data to staging buffer
+	void* data;
+	vmaMapMemory(m_allocator, stagingAllocation, &data);
+	memcpy(data, m_indices.data(), static_cast<size_t>(bufferSize));
+	vmaUnmapMemory(m_allocator, stagingAllocation);
+
+	//GPU only index buffer
+	createBuffer(
+		bufferSize,
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VMA_MEMORY_USAGE_GPU_ONLY,
+		m_indexBuffer,
+		m_indexAllocation
+	);
+
+	copyBuffer(stagingBuffer, m_indexBuffer, bufferSize);
+
+	vmaDestroyBuffer(m_allocator, stagingBuffer, stagingAllocation);
+
+	std::cout << "Engine Buffer : Index buffer successfully loaded into private VRAM using VMA." << std::endl;
+}
