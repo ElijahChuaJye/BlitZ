@@ -43,7 +43,7 @@ struct SwapChainSupportDetails {
 };
 
 struct Vertex {
-	glm::vec2 pos;	//2D Position
+	glm::vec3 pos;	//2D Position
 	glm::vec3 color;//RGB color
 
 	//Vulkan needs to know how step through C++ array in GPU memory.
@@ -77,7 +77,7 @@ struct Vertex {
 		//VK_FORMAT_R32G32_SFLOAT represents a 2D vector (2 * 32 bit floats)
 		//Even though it uses "RBA" color-based naming, Vulakns uses these formats
 		//as generic data size templates to save API complexity
-		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;	// 3D vector (3 * 32-bits floats)
 
 		//Offsetof dynamically calculates how many bytes 'pos' is from the start 
 		//start of struct, protecting us if we change the struct member order

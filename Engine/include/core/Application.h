@@ -13,9 +13,15 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <vulkan/volk.h>
 #include <GLFW/glfw3.h>
 #include <vk_mem_alloc.h>
+
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -25,6 +31,15 @@
 #include <iostream>
 
 #include "VulkTypes.h"
+
+//-- Uniform Buffer Object Layout --
+//To store data like group instead of indivually. Used in Vulkan shader files
+struct UniformBufferObject {
+	alignas(16) glm::mat4 model;
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 proj;
+};
+
 
 class Application {
 public:
@@ -233,18 +248,35 @@ private:
 	//our GPU buffers (vertex buffers, Index Buffers, Uniform buffers)
 	VmaAllocator m_allocator;
 
-	//4-corner Quad Vertices
+	// 8 Vertices for a 3D Cube
 	const std::vector<Vertex> m_vertices = {
-		{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}}, // 0: Top-Left (Red)
-		{{ 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}}, // 1: Top-Right (Green)
-		{{ 0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}}, // 2: Bottom-Right (Blue)
-		{{-0.5f,  0.5f}, {1.0f, 1.0f, 0.0f}}  // 3: Bottom-Left (Yellow)
+		// Front face (Z = +0.5)
+		{{-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 0.0f}}, // 0: Red
+		{{ 0.5f, -0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}}, // 1: Green
+		{{ 0.5f,  0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}}, // 2: Blue
+		{{-0.5f,  0.5f,  0.5f}, {1.0f, 1.0f, 0.0f}}, // 3: Yellow
+
+		// Back face (Z = -0.5)
+		{{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 1.0f}}, // 4: Magenta
+		{{ 0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 1.0f}}, // 5: Cyan
+		{{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}}, // 6: White
+		{{-0.5f,  0.5f, -0.5f}, {0.2f, 0.2f, 0.2f}}  // 7: Dark Grey
 	};
 
-	// 2. Index vector to form 2 triangles out of the 4 vertices above
+	// 36 Indices (6 faces, 2 triangles per face)
 	const std::vector<uint16_t> m_indices = {
-		0, 1, 2,  // First Triangle  (Top-Left -> Top-Right -> Bottom-Right)
-		2, 3, 0   // Second Triangle (Bottom-Right -> Bottom-Left -> Top-Left)
+		// Front
+		0, 1, 2, 2, 3, 0,
+		// Right
+		1, 5, 6, 6, 2, 1,
+		// Back
+		5, 4, 7, 7, 6, 5,
+		// Left
+		4, 0, 3, 3, 7, 4,
+		// Bottom
+		4, 5, 1, 1, 0, 4,
+		// Top
+		3, 2, 6, 6, 7, 3
 	};
 
 	//In Vulkan, every resource need 2 handles
@@ -261,8 +293,24 @@ private:
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memUsage, VkBuffer& buffer, VmaAllocation& allocation);
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 	void createVertexBuffer();
-
 	void createIndexBuffer();
+
+	//FOR UBO and DESCRIPTOR HANDLES
+	VkDescriptorSetLayout m_descriptorSetLayout = VK_NULL_HANDLE;
+	VkDescriptorPool m_descriptorPool = VK_NULL_HANDLE;
+	std::vector<VkDescriptorSet> m_descriptorSets;
+
+	//One uniform buffer per frame-in-flight to avoid CPU-GPU data races
+	std::vector<VkBuffer> m_uniformBuffers;
+	std::vector<VmaAllocation> m_uniformBuffersAllocation;
+	std::vector<void*> m_uniformBuffersMapped;
+
+	//--Helper for UBO --
+	void createDescriptorSetLayout();
+	void createUniformBuffers();
+	void createDescriptorPool();
+	void createDescriptorSets();
+	void updateUniformBuffer(uint32_t currentImage);
 
 
 };

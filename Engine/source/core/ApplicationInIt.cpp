@@ -119,23 +119,37 @@ void Application::initVulkan() {
 		throw::std::runtime_error("Failed to initialize Vulkan");
 	}
 
+	// Create Vulkan Instances * load instance-level function pointers
 	Application::createInstance();
-
 	volkLoadInstance(m_vulkinstance);
-
 	setupDebugMessenger();
 
+	// Create OS window surface & initialize physical/logical GPU devices 
 	createSurface();
-
 	pickPhysicalGPU();
 	createLogicalDevice();
 
+	// Create swapchain and image views for presenting frames to the screen
 	createSwapChain();
 	createImageViews();
+
+	// Build descriptor set layout blueprint BEFORE creating the pipeline
+	createDescriptorSetLayout();
+
+	// Crate graphics pipeline state & basic execution pools
 	createGraphicsPipeline();
 	createCommandPool();
+
+	// Allocate and upload immutable geometry data (Vertices & Indices)
 	createVertexBuffer();
 	createIndexBuffer();
+
+	// Setup dynamic transformation pipeline (UBOs & Descriptor Sets)
+	createUniformBuffers();	// Allocate and persistently map UBOs
+	createDescriptorPool();	//Reserver pool memory
+	createDescriptorSets();	//Allocate & link buffers to descriptor
+
+	// Allocation of command buffers and frame-in-flight primitives (Semaphores & Fences)
 	createCommandBuffers();
 	createSyncObjects(); // Implement this function block to bake the fences!
 }
@@ -323,34 +337,67 @@ void Application::mainLoop() {
  * Vulkan's strict dependency chain.
  */
 void Application::cleanup() {
-	// 1. Destroy Image Views FIRST while the device is still alive!
+	// =========================================================================
+	// PHASE 1: SWAPCHAIN IMAGE VIEWS & DYNAMIC DESCRIPTORS
+	// Tear down presentation targets and shader-resource bindings first.
+	// =========================================================================
+
+	// Destroy swapchain image views before the parent swapchain or device
 	for (auto imageView : m_swapChainImageViews) {
 		if (imageView != VK_NULL_HANDLE) {
 			vkDestroyImageView(m_logicalDevice, imageView, nullptr);
 		}
 	}
-	m_swapChainImageViews.clear(); // Empty the container safely
+	m_swapChainImageViews.clear();
 
-	// 2. Clear out your validation layers/debug utilities
-	if (enableValidationLayers) {
-		vkDestroyDebugUtilsMessengerEXT(m_vulkinstance, m_debugMessenger, nullptr);
+	// Unmap persistent memory pointers and free per-frame Uniform Buffers
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
+		if (m_uniformBuffers[i] != VK_NULL_HANDLE) {
+			vmaUnmapMemory(m_allocator, m_uniformBuffersAllocation[i]);
+			vmaDestroyBuffer(m_allocator, m_uniformBuffers[i], m_uniformBuffersAllocation[i]);
+			m_uniformBuffers[i] = VK_NULL_HANDLE;
+		}
 	}
 
-	// 3. Clean up for graphics pipeline & command pool
+	// Destroying the descriptor pool automatically frees all descriptor sets allocated from it
+	if (m_descriptorPool != VK_NULL_HANDLE) {
+		vkDestroyDescriptorPool(m_logicalDevice, m_descriptorPool, nullptr);
+		m_descriptorPool = VK_NULL_HANDLE;
+	}
+
+	// Destroy the descriptor blueprint layout
+	if (m_descriptorSetLayout != VK_NULL_HANDLE) {
+		vkDestroyDescriptorSetLayout(m_logicalDevice, m_descriptorSetLayout, nullptr);
+		m_descriptorSetLayout = VK_NULL_HANDLE;
+	}
+
+	// =========================================================================
+	// PHASE 2: PIPELINE STATE & COMMAND INFRASTRUCTURE
+	// Free the compiled execution pipelines and command memory pools.
+	// =========================================================================
+
 	if (m_graphicsPipeline != VK_NULL_HANDLE) {
 		vkDestroyPipeline(m_logicalDevice, m_graphicsPipeline, nullptr);
+		m_graphicsPipeline = VK_NULL_HANDLE;
 	}
 
 	if (m_pipelineLayout != VK_NULL_HANDLE) {
 		vkDestroyPipelineLayout(m_logicalDevice, m_pipelineLayout, nullptr);
+		m_pipelineLayout = VK_NULL_HANDLE;
 	}
 
+	// Freeing the command pool implicitly frees all allocated command buffers
 	if (m_commandPool != VK_NULL_HANDLE) {
 		vkDestroyCommandPool(m_logicalDevice, m_commandPool, nullptr);
+		m_commandPool = VK_NULL_HANDLE;
 	}
 
-	// === ADD YOUR NEW SYNCHRONIZATION CLEANUP FOR PIPELINES LOOP HERE ===
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+	// =========================================================================
+	// PHASE 3: FRAME SYNCHRONIZATION PRIMITIVES
+	// Destroy fences and semaphores that guard in-flight CPU/GPU frames.
+	// =========================================================================
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
 		if (m_imageAvailableSemaphores[i] != VK_NULL_HANDLE) {
 			vkDestroySemaphore(m_logicalDevice, m_imageAvailableSemaphores[i], nullptr);
 			m_imageAvailableSemaphores[i] = VK_NULL_HANDLE;
@@ -361,8 +408,7 @@ void Application::cleanup() {
 		}
 	}
 
-	// Loop 2: SAFE FIX - Loop directly through the semaphore array size itself!
-	for (size_t i = 0; i < m_renderFinishedSemaphores.size(); i++) {
+	for (size_t i = 0; i < m_renderFinishedSemaphores.size(); ++i) {
 		if (m_renderFinishedSemaphores[i] != VK_NULL_HANDLE) {
 			vkDestroySemaphore(m_logicalDevice, m_renderFinishedSemaphores[i], nullptr);
 			m_renderFinishedSemaphores[i] = VK_NULL_HANDLE;
@@ -370,7 +416,10 @@ void Application::cleanup() {
 	}
 	m_renderFinishedSemaphores.clear();
 
-	//3. Cleaning of VMA buffers
+	// =========================================================================
+	// PHASE 4: GPU MEMORY BUFFERS & ALLOCATOR TEARDOWN
+	// All VMA allocations must be freed BEFORE tearing down the allocator.
+	// =========================================================================
 
 	if (m_vertexBuffer != VK_NULL_HANDLE) {
 		vmaDestroyBuffer(m_allocator, m_vertexBuffer, m_vertexAllocation);
@@ -382,31 +431,51 @@ void Application::cleanup() {
 		m_indexBuffer = VK_NULL_HANDLE;
 	}
 
-	//Must be destroyed the allocator AFTER all buffers are freed
+	// Teardown the memory allocator after all buffers are destroyed
 	if (m_allocator != VK_NULL_HANDLE) {
 		vmaDestroyAllocator(m_allocator);
 		m_allocator = VK_NULL_HANDLE;
 	}
 
-	// 4. NOW it is safe to destroy the swapchain and device itself
+	// =========================================================================
+	// PHASE 5: PRESENTATION ENGINE & LOGICAL DEVICE DESTRUCTION
+	// The device handles everything created above, so destroy it last among device-level objects.
+	// =========================================================================
+
 	if (m_swapChain != VK_NULL_HANDLE) {
 		vkDestroySwapchainKHR(m_logicalDevice, m_swapChain, nullptr);
+		m_swapChain = VK_NULL_HANDLE;
 	}
 
 	if (m_logicalDevice != VK_NULL_HANDLE) {
 		vkDestroyDevice(m_logicalDevice, nullptr);
+		m_logicalDevice = VK_NULL_HANDLE;
 	}
-	// 5. Finally, tear down instance level dependencies and windows
+
+	// =========================================================================
+	// PHASE 6: INSTANCE-LEVEL HANDLES & OS WINDOW DESTRUCTION
+	// Clean up OS window surfaces, validation debug callbacks, and the Vulkan instance.
+	// =========================================================================
+
 	if (m_surface != VK_NULL_HANDLE) {
 		vkDestroySurfaceKHR(m_vulkinstance, m_surface, nullptr);
+		m_surface = VK_NULL_HANDLE;
+	}
+
+	// Debug messenger must be destroyed before the instance that hosts it
+	if (enableValidationLayers && m_debugMessenger != VK_NULL_HANDLE) {
+		vkDestroyDebugUtilsMessengerEXT(m_vulkinstance, m_debugMessenger, nullptr);
+		m_debugMessenger = VK_NULL_HANDLE;
 	}
 
 	if (m_vulkinstance != VK_NULL_HANDLE) {
 		vkDestroyInstance(m_vulkinstance, nullptr);
+		m_vulkinstance = VK_NULL_HANDLE;
 	}
 
 	if (m_window) {
 		glfwDestroyWindow(m_window);
+		m_window = nullptr;
 	}
 
 	glfwTerminate();

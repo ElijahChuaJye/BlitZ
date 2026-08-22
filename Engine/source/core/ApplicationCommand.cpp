@@ -125,7 +125,7 @@ void Application::createGraphicsPipeline() {
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
-	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+	rasterizer.cullMode = VK_CULL_MODE_NONE;	//Changed to None for testing
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 
 	// 7. MULTISAMPLING STATE
@@ -146,8 +146,13 @@ void Application::createGraphicsPipeline() {
 	// 9. PIPELINE LAYOUT
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = 1;						//Changed from 0 to 1
+	pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;	//Pass the layout handle
+	pipelineLayoutInfo.pushConstantRangeCount = 0;
+	pipelineLayoutInfo.pPushConstantRanges = nullptr;
+
 	if (vkCreatePipelineLayout(m_logicalDevice, &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create pipeline layout!");
+		throw std::runtime_error("Failed to create pipeline layout!");
 	}
 
 	// 10. VULKAN 1.3 DYNAMIC RENDERING RUNTIME ATTACHMENT DEFINITION
@@ -337,15 +342,32 @@ void Application::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	scissor.extent = m_swapChainExtent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
+
+	//This command tells the GPU how veritces are conencted to form triangles without duplicating vertex data.
+	//Params:buffer, offset(0), indexType (VK_INDEX_TPYE_UINT16 matches uint16_t vector).
+	vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+	//Bind Pipeline
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
+
 	//Binding the newly allocated C++ Vertex Buffer to binding slot 0.
 	//GPU Assembler will now read from this buffer when drawing.
 	VkBuffer vertexBuffers[] = { m_vertexBuffer };
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
-	//This command tells the GPU how veritces are conencted to form triangles without duplicating vertex data.
-	//Params:buffer, offset(0), indexType (VK_INDEX_TPYE_UINT16 matches uint16_t vector).
 	vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+	//Binding descriptor set
+	vkCmdBindDescriptorSets(
+		commandBuffer,
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		m_pipelineLayout,
+		0,		//First set index
+		1,		//Descriptor set coutn
+		&m_descriptorSets[m_currentFrame], //Descriptor set for this frame
+		0,
+		nullptr
+	);
 
 	//Indexed draw call
 	//Instad of drawing raw vertices sequentially, GPU looks up indicies from m_indexBuffer,
@@ -403,6 +425,9 @@ void Application::drawFrame() {
 	vkAcquireNextImageKHR(m_logicalDevice, m_swapChain, UINT64_MAX,
 		m_imageAvailableSemaphores[m_currentFrame], // Index tracking
 		VK_NULL_HANDLE, &imageIndex);
+
+	// Update MVP matrices for current in-flight frame
+	updateUniformBuffer(m_currentFrame);
 
 	// 3. Reset the fence only after acquiring the image
 	vkResetFences(m_logicalDevice, 1, &m_inFlightFences[m_currentFrame]);
