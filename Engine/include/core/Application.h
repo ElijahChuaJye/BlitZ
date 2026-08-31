@@ -241,9 +241,18 @@ private:
 	void createSwapChain();
 	void createImageViews();
 
+	//DEPTH BUFFERING
+	VkImage m_depthImage{ VK_NULL_HANDLE };
+	VmaAllocation m_depthImageAllocation{ VK_NULL_HANDLE };
+	VkImageView m_depthImageView{ VK_NULL_HANDLE };
+	VkFormat m_depthFormat = VK_FORMAT_D32_SFLOAT;
+
+	/// <summary>
+	/// Allocates the GPU depth texture and creates its image view for Z-testing.
+	/// </summary>
+	void createDepthResources();
 
 	//For the VMA allocator variable, vertex points and helper functions
-
 	//Main allocator handle. Use this object to create and destroy
 	//our GPU buffers (vertex buffers, Index Buffers, Uniform buffers)
 	VmaAllocator m_allocator;

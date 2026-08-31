@@ -133,6 +133,9 @@ void Application::initVulkan() {
 	createSwapChain();
 	createImageViews();
 
+	// Creating the Z-buffer
+	createDepthResources();
+
 	// Build descriptor set layout blueprint BEFORE creating the pipeline
 	createDescriptorSetLayout();
 
@@ -370,6 +373,10 @@ void Application::cleanup() {
 		vkDestroyDescriptorSetLayout(m_logicalDevice, m_descriptorSetLayout, nullptr);
 		m_descriptorSetLayout = VK_NULL_HANDLE;
 	}
+
+	//Destroy the Depth Cleanup
+	vkDestroyImageView(m_logicalDevice, m_depthImageView, nullptr);
+	vmaDestroyImage(m_allocator, m_depthImage, m_depthImageAllocation);
 
 	// =========================================================================
 	// PHASE 2: PIPELINE STATE & COMMAND INFRASTRUCTURE

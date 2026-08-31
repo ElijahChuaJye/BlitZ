@@ -125,13 +125,22 @@ void Application::createGraphicsPipeline() {
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
-	rasterizer.cullMode = VK_CULL_MODE_NONE;	//Changed to None for testing
-	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.cullMode = VK_CULL_MODE_NONE;		
+	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
 	// 7. MULTISAMPLING STATE
 	VkPipelineMultisampleStateCreateInfo multisampling{};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+	// 7.5 DEPTh STENCIL STATE
+	VkPipelineDepthStencilStateCreateInfo depthStencil{};
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_TRUE;				//Enable depth testing against the Z-buffer
+	depthStencil.depthWriteEnable = VK_TRUE;			//Overwrite depth values for closer fragments
+	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;	//Standard vulkan 3D: smaller Z = closer to camera
+	depthStencil.depthBoundsTestEnable = VK_FALSE;
+	depthStencil.stencilTestEnable = VK_FALSE;
 
 	// 8. COLOR BLENDING STATE
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
@@ -161,6 +170,9 @@ void Application::createGraphicsPipeline() {
 	renderingCreateInfo.colorAttachmentCount = 1;
 	renderingCreateInfo.pColorAttachmentFormats = &m_swapChainImageFormat;
 
+	//REGISTER DEPTH FORMAT
+	renderingCreateInfo.depthAttachmentFormat = m_depthFormat;	// Tells pipeline to expect D32 format
+
 	// 11. COMPLETE MASTER GRAPHICS PIPELINE ASSEMBLY
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -172,6 +184,7 @@ void Application::createGraphicsPipeline() {
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
+	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = m_pipelineLayout;
@@ -283,19 +296,39 @@ void Application::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	barrierToDraw.srcAccessMask = 0; // Defines what memory operations must finish *before* the barrier hits (0 means nothing to wait on)
 	barrierToDraw.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT; // Block subsequent operations from writing colors until this barrier finishes
 
+
+	//Depth Attachment
+	VkImageMemoryBarrier depthBarrier{};
+	depthBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	depthBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;	//Discard the previous content
+	depthBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+	depthBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	depthBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	depthBarrier.image = m_depthImage;
+	depthBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	depthBarrier.subresourceRange.baseMipLevel = 0;
+	depthBarrier.subresourceRange.levelCount = 1;
+	depthBarrier.subresourceRange.baseArrayLayer = 0;
+	depthBarrier.subresourceRange.layerCount = 1;
+	depthBarrier.srcAccessMask = 0;
+	depthBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+	// Submission of both barriers in a single pipeline barrier call
+	VkImageMemoryBarrier barriers[] = { barrierToDraw, depthBarrier };
+
 	// This is the actual hardware command that triggers the memory reorganization.
 	vkCmdPipelineBarrier(
 		commandBuffer,
 		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,             // Wait Stage: Execute this barrier at the absolute start of the GPU's pipeline work
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,  // Block Stage: Freeze the color writing hardware until this barrier is 100% complete
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,  // Block Stage: Freeze the color writing hardware until this barrier is 100% complete
 		0,
 		0, nullptr,                                    // Used for abstract memory barriers (unneeded here)
 		0, nullptr,                                    // Used for buffer memory barriers (unneeded here)
-		1, &barrierToDraw                              // Pass our 1 explicit image barrier layout configuration
+		2, barriers                              // Pass our 1 explicit image barrier layout configuration
 	);
 
 	// =========================================================================
-	// STEP 3: DEFINING RUNTIME COLOR PROPERTIES (DYNAMIC RENDERING ATTACHMENT)
+	// STEP 3: DEFINING RUNTIME COLOR PROPERTIES (DYNAMIC RENDERING ATTACHMENT FOR BOTH COLOR AND DEPTH)
 	// =========================================================================
 	// This defines the behavior of the specific target canvas *during* this rendering block execution.
 	VkRenderingAttachmentInfo colorAttachment{};
@@ -306,6 +339,16 @@ void Application::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;                 // Tells the cache to save all modifications permanently to VRAM when finished
 	colorAttachment.clearValue.color = { {0.01f, 0.01f, 0.015f, 1.0f} };      // Set the clean slate canvas color (Matte Dark Charcoal Blue)
 
+	// 2. Configure Dynamic Rendering Depth Attachment
+	VkRenderingAttachmentInfo depthAttachmentInfo{};
+	depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+	depthAttachmentInfo.imageView = m_depthImageView;
+	depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+	depthAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	depthAttachmentInfo.clearValue.depthStencil = { 1.0f, 0 }; // 1.0f = farthest depth
+
+
 	// =========================================================================
 	// STEP 4: DEFINING RENDERING WINDOW AREA BOUNDARIES
 	// =========================================================================
@@ -315,7 +358,9 @@ void Application::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	renderingInfo.layerCount = 1;                           // Standard 2D output (not rendering a 3D texture array or cube map)
 	renderingInfo.colorAttachmentCount = 1;                 // We are only outputting to 1 single color canvas attachment slot
 	renderingInfo.pColorAttachments = &colorAttachment;     // Binds our color attachment behavior settings struct above
-
+	// 3. Link Depth Attachment into VkRenderingInfo
+	// (Inside your existing renderingInfo struct declaration)
+	renderingInfo.pDepthAttachment = &depthAttachmentInfo;
 	// =========================================================================
 	// STEP 5: THE DYNAMIC DRAWING SECTION (THE GPU WORK BLOCK)
 	// =========================================================================
