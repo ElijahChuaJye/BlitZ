@@ -71,6 +71,8 @@ public:
 	/// </summary>
 	void run();
 
+	//For window resizing variable
+	bool m_framebufferResized{ false };
 
 private:
 	// --- Life Cycle --
@@ -109,6 +111,12 @@ private:
 	/// asynchronous frame processing between the CPU and GPU.
 	/// </summary>
 	void createSyncObjects();
+
+	/// <summary>
+	/// Creates the semaphores that change with the swapchain from the ones that stay with
+	/// each frame
+	/// </summary>
+	void createRenderFinishedSemaphores();
 
 	// --- Core Runtime Drawing Stages ---
 
@@ -245,6 +253,7 @@ private:
 	VkImage m_depthImage{ VK_NULL_HANDLE };
 	VmaAllocation m_depthImageAllocation{ VK_NULL_HANDLE };
 	VkImageView m_depthImageView{ VK_NULL_HANDLE };
+	bool m_depthImageInitialized{};
 	VkFormat m_depthFormat = VK_FORMAT_D32_SFLOAT;
 
 	/// <summary>
@@ -321,6 +330,12 @@ private:
 	void createDescriptorSets();
 	void updateUniformBuffer(uint32_t currentImage);
 
+	//Swapchain Recreation & Window resizing
+	static void framebufferResizeCallBack(GLFWwindow* window, int width, int height);
+
+	//Swapchain recreation
+	void recreateSwapChain();
+	void cleanupSwapChain();
 
 };
 

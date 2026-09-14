@@ -298,6 +298,7 @@ void Application::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 
 
 	//Depth Attachment
+	if (!m_depthImageInitialized) {
 	VkImageMemoryBarrier depthBarrier{};
 	depthBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	depthBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;	//Discard the previous content
@@ -311,7 +312,8 @@ void Application::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	depthBarrier.subresourceRange.baseArrayLayer = 0;
 	depthBarrier.subresourceRange.layerCount = 1;
 	depthBarrier.srcAccessMask = 0;
-	depthBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	//When depth testing reads the existing depth value for comparison and, when a fragment passes, writes a replacement depth value
+	depthBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
 	// Submission of both barriers in a single pipeline barrier call
 	VkImageMemoryBarrier barriers[] = { barrierToDraw, depthBarrier };
@@ -320,12 +322,23 @@ void Application::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t im
 	vkCmdPipelineBarrier(
 		commandBuffer,
 		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,             // Wait Stage: Execute this barrier at the absolute start of the GPU's pipeline work
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,  // Block Stage: Freeze the color writing hardware until this barrier is 100% complete
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,  // Block Stage: Freeze the color writing hardware until this barrier is 100% complete
 		0,
 		0, nullptr,                                    // Used for abstract memory barriers (unneeded here)
 		0, nullptr,                                    // Used for buffer memory barriers (unneeded here)
-		2, barriers                              // Pass our 1 explicit image barrier layout configuration
+		2, barriers									   // Pass our 1 explicit image barrier layout configuration
 	);
+	} else {
+		vkCmdPipelineBarrier(
+			commandBuffer,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,             // Wait Stage: Execute this barrier at the absolute start of the GPU's pipeline work
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,  // Block Stage: Freeze the color writing hardware until this barrier is 100% complete
+			0,
+			0, nullptr,                                    // Used for abstract memory barriers (unneeded here)
+			0, nullptr,                                    // Used for buffer memory barriers (unneeded here)
+			1, &barrierToDraw							   // Pass our 1 explicit image barrier layout configuration
+		);
+	}
 
 	// =========================================================================
 	// STEP 3: DEFINING RUNTIME COLOR PROPERTIES (DYNAMIC RENDERING ATTACHMENT FOR BOTH COLOR AND DEPTH)
@@ -466,10 +479,26 @@ void Application::drawFrame() {
 	vkWaitForFences(m_logicalDevice, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 
 	// 2. Acquiring target canvas index from swapchain
-	uint32_t imageIndex;
-	vkAcquireNextImageKHR(m_logicalDevice, m_swapChain, UINT64_MAX,
+	// OUT_OF_DATE acquires no image: leave the frame fence signaled and rebuild
+	// before recording commands or indexing resources with imageIndex.
+	uint32_t imageIndex{};
+	const VkResult acquireResult = vkAcquireNextImageKHR(
+		m_logicalDevice, 
+		m_swapChain, 
+		UINT64_MAX,
 		m_imageAvailableSemaphores[m_currentFrame], // Index tracking
-		VK_NULL_HANDLE, &imageIndex);
+		VK_NULL_HANDLE, 
+		&imageIndex
+	);
+
+	if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR) {
+		recreateSwapChain();
+		return;
+	}
+
+	if (acquireResult != VK_SUCCESS && acquireResult != VK_SUBOPTIMAL_KHR) {
+		throw std::runtime_error("Failed to acquire swapchain image");
+	}
 
 	// Update MVP matrices for current in-flight frame
 	updateUniformBuffer(m_currentFrame);
@@ -503,6 +532,8 @@ void Application::drawFrame() {
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
 
+	m_depthImageInitialized = true;
+
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
@@ -513,7 +544,15 @@ void Application::drawFrame() {
 	presentInfo.pSwapchains = swapChains;
 	presentInfo.pImageIndices = &imageIndex;
 
-	vkQueuePresentKHR(m_presentQueue, &presentInfo);
+	const VkResult presentResult = vkQueuePresentKHR(m_presentQueue, &presentInfo);
+
+	if (presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR || m_framebufferResized) {
+		recreateSwapChain();
+	}
+	else if (presentResult != VK_SUCCESS) {
+		throw std::runtime_error("Failed to present swapchain image");
+	}
+
 
 	// 2. CYCLE TO THE NEXT TIMING SLOT (0 -> 1 -> 0 -> 1)
 	m_currentFrame = (m_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -528,7 +567,6 @@ void Application::drawFrame() {
 void Application::createSyncObjects() {
 
 	m_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-	m_renderFinishedSemaphores.resize(m_swapChainImages.size());
 	m_inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
 	// 1. CONFIGURE SEMAPHORE BLUEPRINTS
@@ -560,11 +598,25 @@ void Application::createSyncObjects() {
 		}
 	}
 
+	// Frame-slot sync objects survive resize: their count is MAX_FRAMES_IN_FLIGHT.
+	// Render-finished semaphores belong to swapchain image indices, so rebuild them
+	// whenever recreation may change the swapchain image count.
+	createRenderFinishedSemaphores();
+
+	std::cout << "Engine Sync: Fences and Semaphores successfully backed on hardware." << std::endl;
+}
+
+void Application::createRenderFinishedSemaphores(){
+	m_renderFinishedSemaphores.resize(m_swapChainImages.size());
+
+	VkSemaphoreCreateInfo semaphoreInfo{};
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	semaphoreInfo.pNext = nullptr;
+	semaphoreInfo.flags = 0;
+
 	for (size_t i = 0; i < m_swapChainImages.size(); i++) {
 		if (vkCreateSemaphore(m_logicalDevice, &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i]) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create render finished semaphores!");
 		}
 	}
-
-	std::cout << "Engine Sync: Fences and Semaphores successfully backed on hardware." << std::endl;
 }

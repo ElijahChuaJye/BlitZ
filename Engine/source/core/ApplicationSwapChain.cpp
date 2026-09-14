@@ -87,16 +87,15 @@ SwapChainSupportDetails Application::querySwapChainSupport(VkPhysicalDevice& dev
 	}
 
 	//3. Present modes
-	uint32_t presentMode{};
+	//Two call enumerations. First call asks the driver how many entries will it return, then resize, then write the entries into those elements
+	uint32_t presentModeCount{};
 	//Check if there are present modes present first
-	vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentMode, nullptr);
-	if (presentMode != 0) {
-		dets.presentModes.reserve(presentMode);
-		vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentMode, dets.presentModes.data());
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, nullptr);
+	if (presentModeCount != 0) {
+		dets.presentModes.resize(presentModeCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(device, m_surface, &presentModeCount, dets.presentModes.data());
 	}
-
 	return dets;
-
 
 }
 
@@ -238,6 +237,8 @@ void Application::createImageViews() {
 }
 
 void Application::createDepthResources(){
+	m_depthImageInitialized = false;
+
 // 1. Create image information
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -277,5 +278,93 @@ void Application::createDepthResources(){
 		throw std::runtime_error("Failed to create depth image view!");
 	}
 
+}
 
+void Application::framebufferResizeCallBack(GLFWwindow* window, int  width, int height) {
+	(void)width; //Unused variable for now
+	(void)height; //Unused variable for now
+
+	auto* application{ static_cast<Application*>(glfwGetWindowUserPointer(window)) };
+	if (application != nullptr) {	//If there isn't any pointers
+		application->m_framebufferResized = true;
+	}
+}
+
+void Application::recreateSwapChain() {
+	int width{};
+	int height{};
+	glfwGetFramebufferSize(m_window, &width, &height);
+
+	while ((width == 0 || height == 0) && !glfwWindowShouldClose(m_window)) {
+		glfwWaitEvents();
+		glfwGetFramebufferSize(m_window, &width, &height);
+	}
+
+	if (glfwWindowShouldClose(m_window)) { //Request to close has been made
+		return;
+	}
+
+	if (vkDeviceWaitIdle(m_logicalDevice) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to wait for device before swapchain recreation");
+	}
+	
+	//Saves the old format first
+	const VkFormat oldFormat = m_swapChainImageFormat;
+
+	// The GPU is idle. Release resources tied to the old extent and image indices
+	// before querying the surface and creating the replacement swapchain.
+	cleanupSwapChain();
+
+	// Dynamic viewport/scissor handle size changes, but the pipeline's color
+	// attachment format is fixed at creation and must match the new swapchain.
+	createSwapChain();
+	if (m_swapChainImageFormat != oldFormat) {
+		vkDestroyPipeline(m_logicalDevice, m_graphicsPipeline, nullptr);
+		m_graphicsPipeline = VK_NULL_HANDLE;
+
+		vkDestroyPipelineLayout(m_logicalDevice, m_pipelineLayout, nullptr);
+		m_pipelineLayout = VK_NULL_HANDLE;
+
+		createGraphicsPipeline();
+	}
+	createImageViews();
+	createDepthResources();
+	createRenderFinishedSemaphores();
+	m_framebufferResized = false;
+}
+
+void Application::cleanupSwapChain() {
+	//The clean up
+	for (VkImageView imageView : m_swapChainImageViews) {
+		if (imageView != VK_NULL_HANDLE) {
+			vkDestroyImageView(m_logicalDevice, imageView, nullptr);	//Passed nullptr because there is no use of custom Vulkan allocation callbacks
+		}
+	}
+	m_swapChainImageViews.clear();
+
+	if (m_depthImageView != VK_NULL_HANDLE) {
+		vkDestroyImageView(m_logicalDevice, m_depthImageView, nullptr);
+		m_depthImageView = VK_NULL_HANDLE;
+	}
+
+	if (m_depthImage != VK_NULL_HANDLE) {
+		vmaDestroyImage(m_allocator, m_depthImage, m_depthImageAllocation); //In order to allocate and destroy both of them at the same time so VMA can handle it
+		m_depthImage = VK_NULL_HANDLE;
+		m_depthImageAllocation = VK_NULL_HANDLE;
+	}
+
+	//Next we need to remove the semaphores that were associated with the old image indices
+	for (VkSemaphore semaphore : m_renderFinishedSemaphores) {
+		if (semaphore != VK_NULL_HANDLE) {
+			vkDestroySemaphore(m_logicalDevice, semaphore, nullptr);
+		}
+	}
+	m_renderFinishedSemaphores.clear();
+
+	//Then finally clear the parent swapchains
+	if (m_swapChain != VK_NULL_HANDLE) {
+		vkDestroySwapchainKHR(m_logicalDevice, m_swapChain, nullptr);
+		m_swapChain = VK_NULL_HANDLE;
+	}
+	m_swapChainImages.clear();
 }

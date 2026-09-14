@@ -98,14 +98,18 @@ void Application::initWindow() {
 
 	}
 
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); //Telling GLFW not OpenGL context
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);	//Telling GLFW not OpenGL context
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);		//Resizable now		
 
 	m_window = glfwCreateWindow(m_width, m_height, m_title.c_str(), nullptr, nullptr);
 
 	if (!m_window) {
 		throw std::runtime_error("Failed to create window");
 	}
+	//When minimized, recreateSwapChain should not be created to prevented failure since there are 0 pixels.
+	glfwSetWindowUserPointer(m_window, this);	//Setting this to follow the user. Tracker for the window
+	glfwSetFramebufferSizeCallback(m_window, framebufferResizeCallBack);	//Allow the call back
+		
 }
 
 /**
@@ -345,13 +349,7 @@ void Application::cleanup() {
 	// Tear down presentation targets and shader-resource bindings first.
 	// =========================================================================
 
-	// Destroy swapchain image views before the parent swapchain or device
-	for (auto imageView : m_swapChainImageViews) {
-		if (imageView != VK_NULL_HANDLE) {
-			vkDestroyImageView(m_logicalDevice, imageView, nullptr);
-		}
-	}
-	m_swapChainImageViews.clear();
+	cleanupSwapChain();
 
 	// Unmap persistent memory pointers and free per-frame Uniform Buffers
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
@@ -373,10 +371,6 @@ void Application::cleanup() {
 		vkDestroyDescriptorSetLayout(m_logicalDevice, m_descriptorSetLayout, nullptr);
 		m_descriptorSetLayout = VK_NULL_HANDLE;
 	}
-
-	//Destroy the Depth Cleanup
-	vkDestroyImageView(m_logicalDevice, m_depthImageView, nullptr);
-	vmaDestroyImage(m_allocator, m_depthImage, m_depthImageAllocation);
 
 	// =========================================================================
 	// PHASE 2: PIPELINE STATE & COMMAND INFRASTRUCTURE
@@ -415,14 +409,6 @@ void Application::cleanup() {
 		}
 	}
 
-	for (size_t i = 0; i < m_renderFinishedSemaphores.size(); ++i) {
-		if (m_renderFinishedSemaphores[i] != VK_NULL_HANDLE) {
-			vkDestroySemaphore(m_logicalDevice, m_renderFinishedSemaphores[i], nullptr);
-			m_renderFinishedSemaphores[i] = VK_NULL_HANDLE;
-		}
-	}
-	m_renderFinishedSemaphores.clear();
-
 	// =========================================================================
 	// PHASE 4: GPU MEMORY BUFFERS & ALLOCATOR TEARDOWN
 	// All VMA allocations must be freed BEFORE tearing down the allocator.
@@ -448,11 +434,6 @@ void Application::cleanup() {
 	// PHASE 5: PRESENTATION ENGINE & LOGICAL DEVICE DESTRUCTION
 	// The device handles everything created above, so destroy it last among device-level objects.
 	// =========================================================================
-
-	if (m_swapChain != VK_NULL_HANDLE) {
-		vkDestroySwapchainKHR(m_logicalDevice, m_swapChain, nullptr);
-		m_swapChain = VK_NULL_HANDLE;
-	}
 
 	if (m_logicalDevice != VK_NULL_HANDLE) {
 		vkDestroyDevice(m_logicalDevice, nullptr);
