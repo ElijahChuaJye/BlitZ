@@ -1,12 +1,11 @@
 #include <iostream>
-#include "core/Application.h"
+#include "TradingApplication.h"
 
 int main() {
 	std::cout << "3D Trading platform" << std::endl;
 
-	Application app;
-
 	try {
+		TradingApplication app;
 		app.run();
 	}
 	catch (const std::exception& e) {

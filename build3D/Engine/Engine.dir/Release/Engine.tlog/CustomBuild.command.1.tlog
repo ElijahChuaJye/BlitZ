@@ -1,0 +1,10 @@
+^C:\SVN\E.CHUA SVN_BENCH\TRUNK\A. PERSONAL PROJECTS\BLITZ\ENGINE\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" "-SC:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz" "-BC:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D" --check-stamp-file "C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D/Engine/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

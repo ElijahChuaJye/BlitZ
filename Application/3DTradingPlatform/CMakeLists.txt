@@ -1,18 +1,37 @@
 # Discover application level sources
-file(GLOB_RECURSE APP_SOURCES "source/*.cpp")
+file(GLOB_RECURSE APP_SOURCES
+    CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/*"
+)
 
-file(GLOB SHADER_SOURCES 
-    "shaders/*.vert"
-    "shaders/*.frag"
+file(GLOB_RECURSE APP_HEADER
+    CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/*"
+)
+
+file(GLOB_RECURSE SHADER_SOURCES
+    CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/shaders/*"
 )
 
 # Establish the master executable application target binary 
-add_executable(3DTradingPlatform ${APP_SOURCES} ${SHADER_SOURCES})
+add_executable(3DTradingPlatform ${APP_SOURCES} ${APP_HEADER} ${SHADER_SOURCES})
+
+# 3. Add include directory so #include paths resolve cleanly
+target_include_directories(3DTradingPlatform PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+
+# 4. source_group(TREE ...) maps the real disk folder structure into VS filters automatically
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${APP_SOURCES} ${APP_HEADER} ${SHADER_SOURCES})
 
 # Sets the Visual Studio debugging working directory to the folder where SPV/ and shaders/ live
 set_target_properties(3DTradingPlatform PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # ==============================================================================
 # LINK ENGINE MODULE
@@ -44,12 +63,17 @@ if(GLSLC_EXECUTABLE)
     endforeach()
     
     add_custom_target(CompileShaders ALL DEPENDS ${SPV_SHADERS})
+
+    add_custom_command(
+    TARGET 3DTradingPlatform
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/SPV"
+        "$<TARGET_FILE_DIR:3DTradingPlatform>/SPV"
+        COMMENT "Copying shaders beside the executable"
+    )
     set_target_properties(CompileShaders PROPERTIES FOLDER "CMakeTargets")
     add_dependencies(3DTradingPlatform CompileShaders)
 else()
     message(FATAL_ERROR "Vulkan SDK 'glslc' compiler not found!")
 endif()
-
-# Force IDE structure to match the raw shaders directory layout path
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SHADER_SOURCES})
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${APP_SOURCES})

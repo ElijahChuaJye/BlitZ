@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\CMakeFiles\b148d57d3008cb3fd5c48a2f79ed5e70\update_mappings.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glfw-src\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glfw-src\src\mappings.h.in">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glfw-src\CMake\GenerateMappings.cmake" />
+    <None Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glfw-build\src\CMakeFiles\update_mappings" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{FB5B4879-F453-300D-9D6A-CABE0E199180}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{0DE7726A-67DF-3CDD-810A-EFFFBE58B91D}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

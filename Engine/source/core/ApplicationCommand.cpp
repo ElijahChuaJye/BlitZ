@@ -478,6 +478,9 @@ void Application::drawFrame() {
 	// 1. Wait on the fence dedicated to THIS specific frame lane. CPU -> GPU
 	vkWaitForFences(m_logicalDevice, 1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 
+	//Fence garantees that GPU has finished usign resource associated with this frame index. Derived application may now update them safely
+	onFrameStart(m_currentFrame);
+
 	// 2. Acquiring target canvas index from swapchain
 	// OUT_OF_DATE acquires no image: leave the frame fence signaled and rebuild
 	// before recording commands or indexing resources with imageIndex.

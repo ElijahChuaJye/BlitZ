@@ -29,6 +29,7 @@
 #include <map>
 #include <set>
 #include <iostream>
+#include <cstdint>
 
 #include "VulkTypes.h"
 
@@ -51,7 +52,7 @@ public:
 	/// <summary>
 	/// dtor
 	/// </summary>
-	~Application();
+	virtual ~Application();
 
 	/// <summary>
 	/// Delete the copy ctor of the Application
@@ -336,6 +337,20 @@ private:
 	//Swapchain recreation
 	void recreateSwapChain();
 	void cleanupSwapChain();
+
+
+	protected:
+	/**
+	 * @brief Application-specific work performed after the current frame's
+	 * GPU fence has completed.
+	 *
+	 * Derived applications can override this hook to update CPU-side or
+	 * per-frame resources without placing domain-specific logic in Engine.
+	 *
+	 * @param frameIndex Index of the frame-in-flight whose resources are safe
+	 *                   for the CPU to update.
+	 */
+		virtual void onFrameStart(std::uint32_t frameIndex);
 
 };
 

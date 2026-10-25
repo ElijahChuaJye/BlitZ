@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Engine\extern\vulkan\volk.c">
+      <Filter>extern\vulkan</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Engine\source\core\ApplicationCommand.cpp">
+      <Filter>source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Engine\source\core\ApplicationDescriptors.cpp">
+      <Filter>source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Engine\source\core\ApplicationDevice.cpp">
+      <Filter>source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Engine\source\core\ApplicationInIt.cpp">
+      <Filter>source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Engine\source\core\ApplicationSwapChain.cpp">
+      <Filter>source\core</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Engine\include\containers\SPSCQueue.h">
+      <Filter>include\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Engine\include\core\Application.h">
+      <Filter>include\core</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Engine\include\core\VulkTypes.h">
+      <Filter>include\core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Engine\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="extern">
+      <UniqueIdentifier>{8DD58F9D-5B32-37C2-9BBA-EFC7AB7A14A6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="extern\vulkan">
+      <UniqueIdentifier>{13CDC32F-611D-3148-BAB1-CD20C32CFC74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{BE16945C-D4E6-3956-B8ED-7224B634B2A8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\containers">
+      <UniqueIdentifier>{6B51A575-4BAA-314E-91AF-FFD01416DD99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\core">
+      <UniqueIdentifier>{FAE74A1E-0FBE-3221-B63C-D4CAB69C9E10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{52C17D30-C317-378D-8D22-3D2F56F04BB1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\core">
+      <UniqueIdentifier>{9E133C31-C3FA-3E8A-97A4-C585F0D783C5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

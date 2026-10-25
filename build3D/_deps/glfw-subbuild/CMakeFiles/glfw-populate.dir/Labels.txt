@@ -1,0 +1,14 @@
+# Target labels
+ glfw-populate
+# Source files and their labels
+C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D/_deps/glfw-subbuild/CMakeFiles/glfw-populate
+C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D/_deps/glfw-subbuild/CMakeFiles/55a977a3594b7c33543db4bd26c546c4/glfw-populate.rule
+C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D/_deps/glfw-subbuild/CMakeFiles/3b9b8127d1b5a6c55bfeebc9186820e0/glfw-populate-complete.rule
+C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D/_deps/glfw-subbuild/CMakeFiles/6f559abdd280431203fea9bfd74ac99f/glfw-populate-build.rule
+C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D/_deps/glfw-subbuild/CMakeFiles/6f559abdd280431203fea9bfd74ac99f/glfw-populate-configure.rule
+C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D/_deps/glfw-subbuild/CMakeFiles/6f559abdd280431203fea9bfd74ac99f/glfw-populate-download.rule
+C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D/_deps/glfw-subbuild/CMakeFiles/6f559abdd280431203fea9bfd74ac99f/glfw-populate-install.rule
+C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D/_deps/glfw-subbuild/CMakeFiles/6f559abdd280431203fea9bfd74ac99f/glfw-populate-mkdir.rule
+C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D/_deps/glfw-subbuild/CMakeFiles/6f559abdd280431203fea9bfd74ac99f/glfw-populate-patch.rule
+C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D/_deps/glfw-subbuild/CMakeFiles/6f559abdd280431203fea9bfd74ac99f/glfw-populate-test.rule
+C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/build3D/_deps/glfw-subbuild/CMakeFiles/6f559abdd280431203fea9bfd74ac99f/glfw-populate-update.rule

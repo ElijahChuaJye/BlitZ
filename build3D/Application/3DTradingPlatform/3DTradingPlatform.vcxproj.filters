@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Application\3DTradingPlatform\source\TradingApplication.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Application\3DTradingPlatform\source\main.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Application\3DTradingPlatform\include\TradingApplication.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Application\3DTradingPlatform\include\market\MarketData.h">
+      <Filter>include\market</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Application\3DTradingPlatform\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Application\3DTradingPlatform\shaders\frag.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\Application\3DTradingPlatform\shaders\vert.vert">
+      <Filter>shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{BE16945C-D4E6-3956-B8ED-7224B634B2A8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\market">
+      <UniqueIdentifier>{EA6C5CC9-9F4B-33E4-A798-DA046D482DF8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{A673E2E2-FF66-3C53-979D-79C3C7659D02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{52C17D30-C317-378D-8D22-3D2F56F04BB1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

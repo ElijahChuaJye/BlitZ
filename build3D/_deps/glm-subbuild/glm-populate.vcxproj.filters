@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glm-subbuild\CMakeFiles\8345272383df1b3faa6f97ae03cf32b4\glm-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glm-subbuild\CMakeFiles\8345272383df1b3faa6f97ae03cf32b4\glm-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glm-subbuild\CMakeFiles\8345272383df1b3faa6f97ae03cf32b4\glm-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glm-subbuild\CMakeFiles\8345272383df1b3faa6f97ae03cf32b4\glm-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glm-subbuild\CMakeFiles\8345272383df1b3faa6f97ae03cf32b4\glm-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glm-subbuild\CMakeFiles\8345272383df1b3faa6f97ae03cf32b4\glm-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glm-subbuild\CMakeFiles\8345272383df1b3faa6f97ae03cf32b4\glm-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glm-subbuild\CMakeFiles\8345272383df1b3faa6f97ae03cf32b4\glm-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glm-subbuild\CMakeFiles\d5db510c8e637afe9557afb0c76259b1\glm-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glm-subbuild\CMakeFiles\c7d53a68d5a4c938c795a17fa63f3dcf\glm-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glm-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glm-subbuild\CMakeFiles\glm-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{23896B57-CA63-34C1-8BE0-1044799507BA}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

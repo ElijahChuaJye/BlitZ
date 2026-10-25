@@ -468,3 +468,7 @@ void Application::cleanup() {
 
 	glfwTerminate();
 }
+
+void Application::onFrameStart(std::uint32_t frameIndex){
+	(void)frameIndex;
+}

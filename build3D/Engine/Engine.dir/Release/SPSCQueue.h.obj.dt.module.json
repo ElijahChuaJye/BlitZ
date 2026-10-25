@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "Engine.dir\\Release\\SPSCQueue.obj",
+            "outputs": [
+                "Engine.dir\\Release\\SPSCQueue.h.obj.dt.module.json",
+                "Engine.dir\\Release\\SPSCQueue.h.obj.dt.d.json"
+            ],
+            "requires": []
+        }
+    ]
+}

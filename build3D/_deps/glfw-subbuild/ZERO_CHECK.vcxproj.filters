@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="18.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\_deps\glfw-subbuild\CMakeFiles\55a977a3594b7c33543db4bd26c546c4\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{82A17F3E-FCC3-330A-BB59-1F06DB9E3609}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
