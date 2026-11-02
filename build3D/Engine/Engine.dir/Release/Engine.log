@@ -1,9 +1,0 @@
-﻿  Building Custom Rule C:/SVN/e.chua SVN_BENCH/trunk/a. Personal Projects/Blitz/Engine/CMakeLists.txt
-  volk.c
-  ApplicationCommand.cpp
-  ApplicationDescriptors.cpp
-  ApplicationDevice.cpp
-  ApplicationInIt.cpp
-  ApplicationSwapChain.cpp
-  Generating Code...
-  Engine.vcxproj -> C:\SVN\e.chua SVN_BENCH\trunk\a. Personal Projects\Blitz\build3D\Engine\Release\Engine.lib

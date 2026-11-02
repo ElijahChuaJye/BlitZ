@@ -9,5 +9,22 @@ build/
 bin/
 obj/
 
+# CMake build trees and generated configuration files
+build*/
+out/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Compiled shader binaries are regenerated from the GLSL sources
+/Application/3DTradingPlatform/SPV/*.spv
+
+# Generated GLFW bootstrap files
+/Engine/extern/glfw-subbuild/
+
+# Personal resume files; keep them outside the Blitz repository
+/output/
+/resume-review.png
+
 # Ignore local external library artifacts if needed (or keep headers if intended)
 # Project/extern/vulkan/ (uncomment if you don't want to track the source files of external dependencies)

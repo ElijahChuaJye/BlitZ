@@ -10,7 +10,12 @@
 #define TRADING_APPLICATION_H
 
 #include <cstdint>
+#include <atomic>
+#include <iostream>
+#include <thread>
 
+#include "containers/SPSCQueue.h"
+#include "market/MarketData.h"
 #include "core/Application.h"
 
 /**
@@ -29,6 +34,9 @@ protected:
 	 * empty implementation verifies the application-extension boundary.
 	 */
 	void onFrameStart(std::uint32_t frameIndex) override;
+
+private:
+	bool m_queueTestRun{ false };
 };
 
 #endif	//TRADING_APPLICATION_H

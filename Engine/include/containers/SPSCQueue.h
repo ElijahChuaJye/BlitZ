@@ -74,7 +74,7 @@ private:
 
 	std::array<T, Capacity> storage{};
 
-	//std::atomic lets threads safely ready and update one shared value without mutex. This prevents data race.
+	//std::atomic lets threads safely ready and update one shared value without mutex. Helps with cahce-line interference.
 	//Aligning them as 64 bytes allows lesser interference therefore the lesser the chances for data races.
 	alignas(64) std::atomic<std::size_t> m_head{ 0 };	//Points to next item for consumer. After it reads then consumer advance m_head
 	alignas(64) std::atomic<std::size_t> m_tail{ 0 };	//Points to next slot for producer. After it writes, producer advances m_tail
